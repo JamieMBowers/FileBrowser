@@ -1,6 +1,6 @@
 # File & Directory Browser
 
-A small end-to-end proof of concept: an ASP.NET Core (.NET 8) minimal Web API plus a vanilla JavaScript single-page app for browsing, searching, uploading, downloading, copying, moving, and deleting files and folders under a configurable server-side root directory.
+an ASP.NET Core (.NET 10) minimal Web API
 
 No server-side HTML rendering, no UI frameworks, no front-end build step.
 
@@ -8,7 +8,7 @@ No server-side HTML rendering, no UI frameworks, no front-end build step.
 
 | Tool | Required for | Install |
 |---|---|---|
-| [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) | Building and running the app and C# tests | `winget install Microsoft.DotNet.SDK.8` or download from the link |
+| [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) | Building and running the app and C# tests | `winget install Microsoft.DotNet.SDK.10` or download from the link |
 | [Node.js](https://nodejs.org/) 18 or newer | Running the JavaScript unit tests only (uses the built-in `node:test` runner, no npm packages) | `winget install OpenJS.NodeJS.LTS` or download from the link |
 
 The web app itself does **not** need Node.js; it is plain JavaScript served as static files. Node is only needed if you want `dotnet test` to run the JS tests.
