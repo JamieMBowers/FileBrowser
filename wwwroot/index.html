@@ -1,0 +1,46 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>File Browser SPA</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 24px; }
+        #openBrowserBtn { padding: 8px 12px; }
+        dialog { width: min(980px, 92vw); border: 1px solid #ccc; border-radius: 8px; padding: 0; }
+        .dialog-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-bottom: 1px solid #ddd; }
+        .dialog-body { padding: 14px; }
+        .toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+        .toolbar input[type='text'] { min-width: 220px; }
+        .muted { color: #666; font-size: 12px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+        th, td { border-bottom: 1px solid #eee; padding: 6px; text-align: left; }
+        td.actions { white-space: nowrap; }
+        button { cursor: pointer; }
+        .status { min-height: 20px; margin-top: 8px; }
+        .status.success { color: #0a6b2d; animation: successFade 5s linear forwards; }
+        .row-link { color: #0b5fff; text-decoration: underline; background: none; border: none; padding: 0; font: inherit; }
+        .danger { color: #b00020; }
+        @keyframes successFade {
+            0% { opacity: 1; }
+            70% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <button id="openBrowserBtn" type="button">Open File Browser</button>
+
+    <dialog id="browserDialog">
+        <div class="dialog-header">
+            <strong>File Browser</strong>
+            <button id="closeDialogBtn" type="button">Close</button>
+        </div>
+        <div class="dialog-body">
+            <div id="app"></div>
+        </div>
+    </dialog>
+
+    <script src="/app.js"></script>
+</body>
+</html>
