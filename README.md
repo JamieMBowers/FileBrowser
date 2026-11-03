@@ -68,14 +68,16 @@ The JavaScript tests are launched from within the xUnit project (`TestProject.Te
 ## Project layout
 
 ```
-Program.cs                      Minimal API endpoints and startup
-Services/FileBrowserService.cs  All filesystem logic (browse, search, upload, download, delete, move, copy)
-Models/FileBrowserModels.cs     JSON DTOs
-wwwroot/index.html              Static shell, trigger button, and dialog
-wwwroot/app.js                  The SPA: URL state, rendering, dialogs, API calls
-SampleData/                     Default browsable root
-TestProject.Tests/              xUnit tests + Node test wrapper
-TestProject.Tests/js/           JavaScript unit tests
+Program.cs                          Composition root: config, DI, middleware (~30 lines)
+Endpoints/FileBrowserEndpoints.cs   Minimal API route group and error-to-HTTP mapping
+Services/FileBrowserService.cs      All filesystem logic (browse, search, upload, download, delete, move, copy)
+Models/FileBrowserModels.cs         JSON DTOs
+ContentRootLocator.cs               Finds the project folder so wwwroot works from IDE or bin output
+wwwroot/index.html                  Static shell, trigger button, and dialog
+wwwroot/app.js                      The SPA: URL state, rendering, dialogs, API calls
+SampleData/                         Default browsable root
+TestProject.Tests/                  xUnit tests + Node test wrapper
+TestProject.Tests/js/               JavaScript unit tests
 ```
 
 ## API
