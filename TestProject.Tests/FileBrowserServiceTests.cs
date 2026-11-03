@@ -68,6 +68,26 @@ public sealed class FileBrowserServiceTests : IDisposable
         Assert.Throws<InvalidOperationException>(() => _service.GetAbsolutePath("../outside.txt"));
     }
 
+    [Fact]
+    public void DeletePath_RejectsConfiguredRoot()
+    {
+        Assert.Throws<InvalidOperationException>(() => _service.DeletePath(""));
+    }
+
+    [Fact]
+    public void MovePath_RejectsSameSourceAndDestination()
+    {
+        Directory.CreateDirectory(Path.Combine(_tempRoot, "docs"));
+        Assert.Throws<InvalidOperationException>(() => _service.MovePath("docs", "docs", overwrite: true));
+    }
+
+    [Fact]
+    public void CopyPath_RejectsCopyIntoOwnSubdirectory()
+    {
+        Directory.CreateDirectory(Path.Combine(_tempRoot, "docs", "sub"));
+        Assert.Throws<InvalidOperationException>(() => _service.CopyPath("docs", "docs/sub/copy", overwrite: true));
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(_tempRoot))

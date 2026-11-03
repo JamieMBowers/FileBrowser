@@ -5,6 +5,9 @@ namespace TestProject.Services;
 public class FileBrowserService
 {
     private readonly string _rootPath;
+    private static readonly StringComparison PathComparison = OperatingSystem.IsWindows()
+        ? StringComparison.OrdinalIgnoreCase
+        : StringComparison.Ordinal;
 
     public FileBrowserService(string rootPath)
     {
@@ -29,12 +32,85 @@ public class FileBrowserService
         var normalized = NormalizeRelativePath(relativePath);
         var absolute = Path.GetFullPath(Path.Combine(_rootPath, normalized));
 
-        if (!absolute.StartsWith(_rootPath, StringComparison.OrdinalIgnoreCase))
+        if (!IsUnderRoot(absolute))
         {
             throw new InvalidOperationException("Path escapes configured root.");
         }
 
+        EnsureNoReparsePointTraversal(absolute);
+
         return absolute;
+    }
+
+    private bool IsUnderRoot(string absolutePath)
+    {
+        var relative = Path.GetRelativePath(_rootPath, absolutePath);
+        if (relative == ".")
+        {
+            return true;
+        }
+
+        if (Path.IsPathRooted(relative))
+        {
+            return false;
+        }
+
+        return !relative.Equals("..", PathComparison)
+            && !relative.StartsWith($"..{Path.DirectorySeparatorChar}", PathComparison)
+            && !relative.StartsWith($"..{Path.AltDirectorySeparatorChar}", PathComparison);
+    }
+
+    private static string EnsureTrailingSeparator(string path)
+    {
+        if (path.EndsWith(Path.DirectorySeparatorChar) || path.EndsWith(Path.AltDirectorySeparatorChar))
+        {
+            return path;
+        }
+
+        return path + Path.DirectorySeparatorChar;
+    }
+
+    private static bool IsSamePath(string left, string right)
+    {
+        var leftTrimmed = left.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        var rightTrimmed = right.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        return string.Equals(leftTrimmed, rightTrimmed, PathComparison);
+    }
+
+    private static bool IsDescendantPath(string parent, string child)
+    {
+        if (IsSamePath(parent, child))
+        {
+            return false;
+        }
+
+        return EnsureTrailingSeparator(child).StartsWith(EnsureTrailingSeparator(parent), PathComparison);
+    }
+
+    private void EnsureNoReparsePointTraversal(string absolutePath)
+    {
+        var relative = Path.GetRelativePath(_rootPath, absolutePath);
+        if (relative == ".")
+        {
+            return;
+        }
+
+        var current = _rootPath;
+        foreach (var segment in relative.Split(['/', '\\'], StringSplitOptions.RemoveEmptyEntries))
+        {
+            current = Path.Combine(current, segment);
+
+            if (!File.Exists(current) && !Directory.Exists(current))
+            {
+                break;
+            }
+
+            var attributes = File.GetAttributes(current);
+            if ((attributes & FileAttributes.ReparsePoint) != 0)
+            {
+                throw new InvalidOperationException("Path traversal through symbolic links is not allowed.");
+            }
+        }
     }
 
     public string GetRelativePath(string absolutePath)
@@ -206,6 +282,11 @@ public class FileBrowserService
 
     public void DeletePath(string relativePath)
     {
+        if (string.IsNullOrWhiteSpace(NormalizeRelativePath(relativePath)))
+        {
+            throw new InvalidOperationException("Cannot delete configured root.");
+        }
+
         var absolutePath = GetAbsolutePath(relativePath);
 
         if (File.Exists(absolutePath))
@@ -228,6 +309,11 @@ public class FileBrowserService
         var sourceAbsolutePath = GetAbsolutePath(sourceRelativePath);
         var destinationAbsolutePath = GetAbsolutePath(destinationRelativePath);
 
+        if (IsSamePath(sourceAbsolutePath, destinationAbsolutePath))
+        {
+            throw new InvalidOperationException("Source and destination cannot be the same path.");
+        }
+
         if (File.Exists(sourceAbsolutePath))
         {
             var destinationDirectory = Path.GetDirectoryName(destinationAbsolutePath);
@@ -242,11 +328,21 @@ public class FileBrowserService
 
         if (Directory.Exists(sourceAbsolutePath))
         {
+            if (IsDescendantPath(sourceAbsolutePath, destinationAbsolutePath))
+            {
+                throw new InvalidOperationException("Cannot move a directory into itself.");
+            }
+
             if (Directory.Exists(destinationAbsolutePath) || File.Exists(destinationAbsolutePath))
             {
                 if (!overwrite)
                 {
                     throw new IOException("Destination already exists.");
+                }
+
+                if (Directory.Exists(destinationAbsolutePath) && IsDescendantPath(destinationAbsolutePath, sourceAbsolutePath))
+                {
+                    throw new InvalidOperationException("Cannot overwrite a destination that contains the source directory.");
                 }
 
                 DeletePath(GetRelativePath(destinationAbsolutePath));
@@ -264,6 +360,11 @@ public class FileBrowserService
         var sourceAbsolutePath = GetAbsolutePath(sourceRelativePath);
         var destinationAbsolutePath = GetAbsolutePath(destinationRelativePath);
 
+        if (IsSamePath(sourceAbsolutePath, destinationAbsolutePath))
+        {
+            throw new InvalidOperationException("Source and destination cannot be the same path.");
+        }
+
         if (File.Exists(sourceAbsolutePath))
         {
             var destinationDirectory = Path.GetDirectoryName(destinationAbsolutePath);
@@ -278,6 +379,11 @@ public class FileBrowserService
 
         if (Directory.Exists(sourceAbsolutePath))
         {
+            if (IsDescendantPath(sourceAbsolutePath, destinationAbsolutePath))
+            {
+                throw new InvalidOperationException("Cannot copy a directory into itself.");
+            }
+
             CopyDirectory(sourceAbsolutePath, destinationAbsolutePath, overwrite);
             return;
         }
