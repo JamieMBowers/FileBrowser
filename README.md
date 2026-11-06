@@ -18,7 +18,7 @@ Optional IDEs: Visual Studio 2022 or newer, JetBrains Rider, or VS Code with the
 Verify your installs:
 
 ```powershell
-dotnet --version   # should print 8.x
+dotnet --version   # should print 10.x
 node --version     # should print v18 or newer
 ```
 
